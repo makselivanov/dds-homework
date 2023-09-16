@@ -1,10 +1,10 @@
 package storage
 
 class Storage {
-    private val array = ByteArray(0)
+    private var array = ByteArray(0)
 
     fun update(newData: ByteArray) {
-        newData.copyInto(array)
+        array = newData.copyOf()
     }
     fun get(): ByteArray {
         return array
