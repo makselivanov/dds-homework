@@ -1,4 +1,4 @@
-package Database
+package database
 
 var globalVersion int = 0
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-var db = newDatabase()
+var db = database.newDatabase()
 
 func requestReplace(writer http.ResponseWriter, reader *http.Request) {
 	switch reader.Method {
