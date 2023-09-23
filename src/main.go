@@ -5,12 +5,24 @@ import (
 	"net/http"
 )
 
-func requestReplace(w http.ResponseWriter, r *http.Request) {
-	println("replace")
+var db = newDatabase()
+
+func requestReplace(writer http.ResponseWriter, reader *http.Request) {
+	switch reader.Method {
+	case http.MethodPost:
+		//TODO
+	default:
+		writer.WriteHeader(http.StatusBadRequest)
+	}
 }
 
-func requestGet(w http.ResponseWriter, r *http.Request) {
-	println("get")
+func requestGet(writer http.ResponseWriter, reader *http.Request) {
+	switch reader.Method {
+	case http.MethodGet:
+		//TODO
+	default:
+		writer.WriteHeader(http.StatusBadRequest)
+	}
 }
 
 func main() {
