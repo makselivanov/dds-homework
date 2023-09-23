@@ -17,7 +17,7 @@ type Database struct {
 	transactions []Transaction
 }
 
-func newSnapshot(newValue string) Snapshot {
+func NewSnapshot(newValue string) Snapshot {
 	globalVersion++
 	return Snapshot{
 		value:   newValue,
@@ -25,7 +25,7 @@ func newSnapshot(newValue string) Snapshot {
 	}
 }
 
-func newDatabase() Database {
+func NewDatabase() Database {
 	return Database{
 		snapshot:     newSnapshot(""),
 		transactions: make([]Transaction, 0),

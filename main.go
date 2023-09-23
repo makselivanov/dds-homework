@@ -1,11 +1,12 @@
 package main
 
 import (
+	database "Database"
 	"log"
 	"net/http"
 )
 
-var db = database.newDatabase()
+var db = database.NewDatabase()
 
 func requestReplace(writer http.ResponseWriter, reader *http.Request) {
 	switch reader.Method {
