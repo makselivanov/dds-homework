@@ -27,7 +27,7 @@ func NewSnapshot(newValue string) Snapshot {
 
 func NewDatabase() Database {
 	return Database{
-		snapshot:     newSnapshot(""),
+		snapshot:     NewSnapshot(""),
 		transactions: make([]Transaction, 0),
 	}
 }
