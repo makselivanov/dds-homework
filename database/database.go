@@ -35,11 +35,11 @@ func NewDatabase() Database {
 	}
 }
 
-func (db *Database) AddTransaction(value string) {
+func (db *Database) AddTransaction(newValue string) {
 	curVersion := db.snapshot.version
 	transaction := Transaction{
 		fromSnapshotVersion: curVersion,
-		value:               value,
+		value:               newValue,
 	}
 	//FIXME not thread safe?
 	db.transactions = append(db.transactions, transaction)

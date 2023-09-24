@@ -13,16 +13,16 @@ var db = database.NewDatabase()
 func requestReplace(writer http.ResponseWriter, reader *http.Request) {
 	switch reader.Method {
 	case http.MethodPost:
-		log.Println("POST /replace")
-		var buffer string
-		_, err := reader.Body.Read([]byte(buffer))
+		var buffer []byte = make([]byte, 1000)
+		n, err := reader.Body.Read(buffer)
+		log.Printf("POST /replace body len: %d", n)
 
 		if err != nil && err != io.EOF {
 			writer.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		writer.WriteHeader(http.StatusOK)
-		db.AddTransaction(buffer)
+		db.AddTransaction(string(buffer))
 	default:
 		writer.WriteHeader(http.StatusBadRequest)
 	}
@@ -33,6 +33,7 @@ func requestGet(writer http.ResponseWriter, reader *http.Request) {
 	case http.MethodGet:
 		log.Println("GET /get")
 		writer.WriteHeader(http.StatusOK)
+		writer.Header().Set("Content-Type", "application/text")
 		writer.Write([]byte(db.GetValue()))
 	default:
 		writer.WriteHeader(http.StatusBadRequest)
