@@ -28,7 +28,7 @@ func NewSnapshot(newValue string) Snapshot {
 }
 
 func NewDatabase() Database {
-	log.Printf("Create database")
+	log.Println("Create database")
 	return Database{
 		snapshot:     NewSnapshot(""),
 		transactions: make([]Transaction, 0),
@@ -43,7 +43,7 @@ func (db Database) AddTransaction(value string) {
 	}
 	//FIXME not thread safe?
 	db.transactions = append(db.transactions, transaction)
-	log.Println("Add new transaction from snapshot version %d", curVersion)
+	log.Printf("Add new transaction from snapshot version %d\n", curVersion)
 }
 
 func (db Database) GetValue() string {
@@ -56,7 +56,7 @@ func (db Database) GetValue() string {
 	} else {
 		log.Println("Last value from snapshot")
 	}
-	log.Println("Return value from database: %s", value)
+	log.Printf("Return value from database: %s\n", value)
 	return value
 }
 
@@ -67,6 +67,6 @@ func (db Database) SaveSnapshot() {
 	operation := db.transactions[len(db.transactions)-1]
 	if operation.fromSnapshotVersion >= globalVersion {
 		db.snapshot = NewSnapshot(operation.value)
-		log.Println("Save new snapshot version %d", db.snapshot.version)
+		log.Printf("Save new snapshot version %d\n", db.snapshot.version)
 	}
 }
