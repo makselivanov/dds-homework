@@ -22,7 +22,7 @@ func requestReplace(writer http.ResponseWriter, reader *http.Request) {
 			return
 		}
 		writer.WriteHeader(http.StatusOK)
-		db.AddTransaction(string(buffer))
+		db.AddTransaction(string(buffer[:n]))
 	default:
 		writer.WriteHeader(http.StatusBadRequest)
 	}
@@ -33,7 +33,7 @@ func requestGet(writer http.ResponseWriter, reader *http.Request) {
 	case http.MethodGet:
 		log.Println("GET /get")
 		writer.WriteHeader(http.StatusOK)
-		writer.Header().Set("Content-Type", "application/text")
+		writer.Header().Set("Content-Type", "text/plain")
 		writer.Write([]byte(db.GetValue()))
 	default:
 		writer.WriteHeader(http.StatusBadRequest)
