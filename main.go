@@ -42,6 +42,7 @@ func requestGet(writer http.ResponseWriter, reader *http.Request) {
 func autoSaveSnapshot() {
 	for {
 		time.Sleep(time.Minute)
+		log.Println("Trying to save snapshot")
 		db.SaveSnapshot()
 	}
 }

@@ -35,7 +35,7 @@ func NewDatabase() Database {
 	}
 }
 
-func (db Database) AddTransaction(value string) {
+func (db *Database) AddTransaction(value string) {
 	curVersion := db.snapshot.version
 	transaction := Transaction{
 		fromSnapshotVersion: curVersion,
@@ -51,16 +51,18 @@ func (db Database) GetValue() string {
 	shapshot := db.snapshot
 	value := shapshot.value
 	if len(db.transactions) > 0 && db.transactions[len(db.transactions)-1].fromSnapshotVersion >= shapshot.version {
-		value = db.transactions[len(db.transactions)-1].value
-		log.Println("Last value from transaction")
+		index := len(db.transactions) - 1
+		transaction := db.transactions[index]
+		value = transaction.value
+		log.Printf("Last value from transaction version from snapshot v%d and index %d", transaction.fromSnapshotVersion, index)
 	} else {
-		log.Println("Last value from snapshot")
+		log.Printf("Last value from snapshot version %d", shapshot.version)
 	}
 	log.Printf("Return value from database: %s\n", value)
 	return value
 }
 
-func (db Database) SaveSnapshot() {
+func (db *Database) SaveSnapshot() {
 	if len(db.transactions) == 0 {
 		return
 	}
