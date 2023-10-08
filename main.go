@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 )
 
 var source = "selivanov"
@@ -51,7 +50,7 @@ func requestTest(writer http.ResponseWriter, reader *http.Request) {
 	http.ServeFile(writer, reader, "static/index.html")
 }
 
-func requestClock(writer http.ResponseWriter, reader *http.Request) {
+func requestVClock(writer http.ResponseWriter, reader *http.Request) {
 	switch reader.Method {
 	case http.MethodGet:
 		log.Println("GET /vclock")
@@ -70,20 +69,6 @@ func requestClock(writer http.ResponseWriter, reader *http.Request) {
 	}
 }
 
-func requestVClock(writer http.ResponseWriter, reader *http.Request) {
-	switch reader.Method {
-	case http.MethodGet:
-		log.Println("GET /vclock")
-		writer.Header().Set("Content-Type", "text/plain")
-
-		writer.WriteHeader(http.StatusOK)
-		localClock := manager.GetVClock()[source]
-		writer.Write([]byte(strconv.FormatUint(localClock, 10)))
-	default:
-		writer.WriteHeader(http.StatusBadRequest)
-	}
-}
-
 func main() {
 	if len(os.Args) == 1 {
 		log.Fatalln("Should add program args with bind port and hostpeers")
@@ -97,7 +82,6 @@ func main() {
 	http.HandleFunc("/get", requestGet)
 	http.HandleFunc("/test", requestTest)
 	http.HandleFunc("/vclock", requestVClock)
-	http.HandleFunc("/clock", requestClock)
 	//http.HandleFunc("/ws", )
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil) // устанавливаем порт веб-сервера
 	if err != nil {
