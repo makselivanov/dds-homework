@@ -71,11 +71,12 @@ func requestVClock(writer http.ResponseWriter, reader *http.Request) {
 
 func main() {
 	if len(os.Args) == 1 {
-		log.Fatal("Should add program args with bind port and host peers")
+		log.Fatalln("Should add program args with bind port and hostpeers")
 	}
 	port := os.Args[1]
 	peers = os.Args[2:]
 	manager.Init(source)
+	log.Printf("Binding to port %s", port)
 	http.HandleFunc("/replace", requestReplace) // Устанавливаем роутер
 	http.HandleFunc("/post", requestReplace)
 	http.HandleFunc("/get", requestGet)
