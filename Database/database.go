@@ -1,17 +1,20 @@
 package database
 
-import "log"
+import (
+	"log"
 
-var globalVersion int = 0
+	jsonpatch "github.com/evanphx/json-patch/v5"
+)
 
 type Snapshot struct {
-	value   string
-	version int
+	snap  string
+	clock map[string]uint64
 }
 
 type Transaction struct {
-	fromSnapshotVersion int
-	value               string
+	Source  string
+	Id      uint64
+	Payload string
 }
 
 type Database struct {
@@ -19,56 +22,63 @@ type Database struct {
 	transactions []Transaction
 }
 
-func NewSnapshot(newValue string) Snapshot {
-	globalVersion++
+func NewSnapshot(newValue string, clock map[string]uint64) Snapshot {
 	return Snapshot{
-		value:   newValue,
-		version: globalVersion,
+		snap:  newValue,
+		clock: clock,
 	}
 }
 
-func NewDatabase() Database {
+func NewDatabase(clock map[string]uint64) Database {
 	log.Println("Create database")
 	return Database{
-		snapshot:     NewSnapshot(""),
+		snapshot:     NewSnapshot("{}", clock),
 		transactions: make([]Transaction, 0),
 	}
 }
 
-func (db *Database) AddTransaction(newValue string) {
-	curVersion := db.snapshot.version
-	transaction := Transaction{
-		fromSnapshotVersion: curVersion,
-		value:               newValue,
-	}
-	//FIXME not thread safe?
+func (db *Database) AddTransaction(transaction Transaction) {
 	db.transactions = append(db.transactions, transaction)
-	log.Printf("Add new transaction from snapshot version %d\n", curVersion)
+}
+
+func ApplyTransaction(snap string, transaction Transaction) (string, error) {
+	patch, err := jsonpatch.DecodePatch([]byte(transaction.Payload))
+	if err != nil {
+		log.Println("Error when trying to decode patch")
+		return snap, err
+	}
+	newsnap, err := patch.Apply([]byte(snap))
+	if err != nil {
+		log.Println("Error when trying to apply patch")
+		return snap, err
+	}
+	return string(newsnap), nil
 }
 
 func (db Database) GetValue() string {
 	//FIXME should be tread safe?
-	shapshot := db.snapshot
-	value := shapshot.value
-	if len(db.transactions) > 0 && db.transactions[len(db.transactions)-1].fromSnapshotVersion >= shapshot.version {
-		index := len(db.transactions) - 1
-		transaction := db.transactions[index]
-		value = transaction.value
-		log.Printf("Last value from transaction version from snapshot v%d and index %d", transaction.fromSnapshotVersion, index)
-	} else {
-		log.Printf("Last value from snapshot version %d", shapshot.version)
-	}
-	log.Printf("Return value from database: %s\n", value)
-	return value
+	snapshot := db.snapshot
+	snap := snapshot.snap
+	return snap
 }
 
 func (db *Database) SaveSnapshot() {
-	if len(db.transactions) == 0 {
-		return
+	snapshot := db.snapshot
+	newsnap := snapshot.snap
+	transactions := db.transactions
+	flag := false
+	newclock := snapshot.clock
+	var err error = nil
+	for _, transcation := range transactions {
+		if transcation.Id > snapshot.clock[transcation.Source] {
+			newsnap, err = ApplyTransaction(newsnap, transcation)
+			if err == nil {
+				flag = true
+				newclock[transcation.Source] = max(newclock[transcation.Source], transcation.Id)
+			}
+		}
 	}
-	operation := db.transactions[len(db.transactions)-1]
-	if operation.fromSnapshotVersion >= globalVersion {
-		db.snapshot = NewSnapshot(operation.value)
-		log.Printf("Save new snapshot version %d\n", db.snapshot.version)
+	if flag {
+		db.snapshot = NewSnapshot(newsnap, newclock)
 	}
 }
