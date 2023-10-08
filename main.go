@@ -48,10 +48,18 @@ func autoSaveSnapshot() {
 	}
 }
 
+func requestTest(writer http.ResponseWriter, reader *http.Request) {
+	http.ServeFile(writer, reader, "static/index.html")
+}
+
 func main() {
 	go autoSaveSnapshot()
 	http.HandleFunc("/replace", requestReplace) // Устанавливаем роутер
+	http.HandleFunc("/post", requestReplace)
 	http.HandleFunc("/get", requestGet)
+	http.HandleFunc("/test", requestTest)
+	//http.HandleFunc("/vclock", )
+	//http.HandleFunc("/ws", )
 	err := http.ListenAndServe(":8080", nil) // устанавливаем порт веб-сервера
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
