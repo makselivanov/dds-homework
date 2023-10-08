@@ -1,14 +1,12 @@
 package main
 
 import (
-	database "Database"
+	databaseManager "Manager"
+	manager "Manager"
 	"io"
 	"log"
 	"net/http"
-	"time"
 )
-
-var db = database.NewDatabase()
 
 func requestReplace(writer http.ResponseWriter, reader *http.Request) {
 	switch reader.Method {
@@ -22,7 +20,7 @@ func requestReplace(writer http.ResponseWriter, reader *http.Request) {
 			return
 		}
 		writer.WriteHeader(http.StatusOK)
-		db.AddTransaction(string(buffer[:n]))
+		manager.AddTransaction(string(buffer[:n]))
 	default:
 		writer.WriteHeader(http.StatusBadRequest)
 	}
@@ -34,17 +32,9 @@ func requestGet(writer http.ResponseWriter, reader *http.Request) {
 		log.Println("GET /get")
 		writer.WriteHeader(http.StatusOK)
 		writer.Header().Set("Content-Type", "text/plain")
-		writer.Write([]byte(db.GetValue()))
+		writer.Write([]byte(manager.GetValue()))
 	default:
 		writer.WriteHeader(http.StatusBadRequest)
-	}
-}
-
-func autoSaveSnapshot() {
-	for {
-		time.Sleep(time.Minute)
-		log.Println("Trying to save snapshot")
-		db.SaveSnapshot()
 	}
 }
 
@@ -53,7 +43,7 @@ func requestTest(writer http.ResponseWriter, reader *http.Request) {
 }
 
 func main() {
-	go autoSaveSnapshot()
+	databaseManager.Init()
 	http.HandleFunc("/replace", requestReplace) // Устанавливаем роутер
 	http.HandleFunc("/post", requestReplace)
 	http.HandleFunc("/get", requestGet)

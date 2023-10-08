@@ -2,6 +2,6 @@ go 1.21.1
 
 use (
 	.
-	./database
-	./server
+	./Database
+	./Manager
 )
