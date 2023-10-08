@@ -41,6 +41,7 @@ func Init(source string) {
 	clock[localSource] = 0
 	db = database.NewDatabase(clock)
 	go autoSaveSnapshot()
+	database.Init()
 }
 
 func GetVClock() map[string]uint64 {

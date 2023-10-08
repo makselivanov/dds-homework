@@ -22,10 +22,21 @@ type Database struct {
 	transactions []Transaction
 }
 
+var optionsJsonPatch *jsonpatch.ApplyOptions
+
+func Init() {
+	optionsJsonPatch = jsonpatch.NewApplyOptions()
+	optionsJsonPatch.AllowMissingPathOnRemove = true
+}
+
 func NewSnapshot(newValue string, clock map[string]uint64) Snapshot {
+	newclock := make(map[string]uint64)
+	for key, value := range clock {
+		newclock[key] = value
+	}
 	return Snapshot{
 		snap:  newValue,
-		clock: clock,
+		clock: newclock,
 	}
 }
 
@@ -47,7 +58,7 @@ func ApplyTransaction(snap string, transaction Transaction) (string, error) {
 		log.Println("Error when trying to decode patch")
 		return snap, err
 	}
-	newsnap, err := patch.Apply([]byte(snap))
+	newsnap, err := patch.ApplyWithOptions([]byte(snap), optionsJsonPatch)
 	if err != nil {
 		log.Println("Error when trying to apply patch")
 		return snap, err
