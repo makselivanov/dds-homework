@@ -70,6 +70,9 @@ func requestVClock(writer http.ResponseWriter, reader *http.Request) {
 }
 
 func main() {
+	if len(os.Args) == 1 {
+		log.Fatal("Should add program args with bind port and host peers")
+	}
 	port := os.Args[1]
 	peers = os.Args[2:]
 	manager.Init(source)
