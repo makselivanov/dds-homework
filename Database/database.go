@@ -28,6 +28,10 @@ func Init() {
 	optionsJsonPatch.AllowMissingPathOnRemove = true
 }
 
+func (db Database) GetTransactions() []Transaction {
+	return db.transactions
+}
+
 func NewSnapshot(newValue string) Snapshot {
 	return Snapshot{
 		snap: newValue,

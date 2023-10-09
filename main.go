@@ -84,14 +84,33 @@ func websocketHandler(writer http.ResponseWriter, reader *http.Request) {
 	defer ws.Close(websocket.StatusInternalError, fmt.Sprintf("Connection is closed with %s", source))
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
+
 	ch := make(chan database.Transaction)
-	manager.AddChannel(ch)
+
+	manager.SendAllTransactions(ch)
 
 loop:
 	for {
 		select {
 		case <-ctx.Done():
-			break loop
+			return
+		case transaction, ok := <-ch:
+			if !ok {
+				break loop
+			}
+			log.Printf("Sending transaction id %d source %s to peer\n", transaction.Id, transaction.Source)
+			wsjson.Write(ctx, ws, transaction)
+		}
+	}
+
+	ch = make(chan database.Transaction)
+
+	manager.AddChannel(ch)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
 		case transaction := <-ch:
 			log.Printf("Sending transaction id %d source %s to peer\n", transaction.Id, transaction.Source)
 			wsjson.Write(ctx, ws, transaction)
@@ -123,7 +142,7 @@ loop:
 				//log.Printf("Error read from %s: %s", peer, err.Error())
 				continue loop
 			}
-			log.Printf("Got transaction from %s\n with id %d source %s", peer, transaction.Id, transaction.Source)
+			log.Printf("Got transaction from %s with id %d source %s", peer, transaction.Id, transaction.Source)
 			manager.AddTransaction(transaction)
 		}
 	}

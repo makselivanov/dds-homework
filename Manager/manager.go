@@ -49,6 +49,17 @@ func AddChannel(ch chan database.Transaction) {
 	channels = append(channels, ch)
 }
 
+func sendingAllTransactions(ch chan database.Transaction) {
+	for _, transaction := range db.GetTransactions() {
+		ch <- transaction
+	}
+	close(ch)
+}
+
+func SendAllTransactions(ch chan database.Transaction) {
+	go sendingAllTransactions(ch)
+}
+
 func autoLocalSave() {
 	ch := make(chan database.Transaction)
 	channels = append(channels, ch)
