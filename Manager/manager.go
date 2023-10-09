@@ -48,7 +48,7 @@ func autoLocalSave() {
 	channels = append(channels, ch)
 
 	for {
-		var transaction = <-channel
+		var transaction = <-ch
 		db.AddTransaction(transaction)
 	}
 }

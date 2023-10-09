@@ -16,7 +16,7 @@ import (
 	"nhooyr.io/websocket/wsjson"
 )
 
-var source = "selivanov"
+var source string
 
 var peers []string
 
@@ -119,6 +119,7 @@ loop:
 			break loop
 		default:
 			wsjson.Read(ctx, c, transaction)
+			log.Printf("Got transaction from %s\n", peer)
 			manager.AddTransaction(transaction)
 		}
 	}
@@ -134,8 +135,9 @@ func main() {
 	if len(os.Args) == 1 {
 		log.Fatalln("Should add program args with bind port and hostpeers")
 	}
-	port := os.Args[1]
-	peers = os.Args[2:]
+	source = os.Args[1]
+	port := os.Args[2]
+	peers = os.Args[3:]
 	manager.Init(source)
 	log.Printf("Binding to port %s", port)
 	http.HandleFunc("/replace", requestReplace) // Устанавливаем роутер

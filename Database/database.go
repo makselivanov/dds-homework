@@ -55,12 +55,12 @@ func (db *Database) AddTransaction(transaction Transaction) {
 func ApplyTransaction(snap string, transaction Transaction) (string, error) {
 	patch, err := jsonpatch.DecodePatch([]byte(transaction.Payload))
 	if err != nil {
-		log.Println("Error when trying to decode patch")
+		log.Printf("Error when trying to decode patch from %s id %d\n", transaction.Source, transaction.Id)
 		return snap, err
 	}
 	newsnap, err := patch.ApplyWithOptions([]byte(snap), optionsJsonPatch)
 	if err != nil {
-		log.Println("Error when trying to apply patch")
+		log.Printf("Error when trying to apply patch from %s id %d\n", transaction.Source, transaction.Id)
 		return snap, err
 	}
 	return string(newsnap), nil
