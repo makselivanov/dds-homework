@@ -10,6 +10,8 @@ var clock = make(map[string]uint64)
 var localSource string
 
 var db database.Database
+var channels []chan database.Transaction
+var channel chan database.Transaction
 
 func NewTransaction(payload string, source string) database.Transaction {
 	clock[localSource]++
@@ -28,8 +30,31 @@ func autoSaveSnapshot() {
 	}
 }
 
+func autoSendTransactions() {
+	for {
+		var transaction = <-channel
+		for _, ch := range channels {
+			ch <- transaction
+		}
+	}
+}
+
+func AddChannel(ch chan database.Transaction) {
+	channels = append(channels, ch)
+}
+
+func autoLocalSave() {
+	ch := make(chan database.Transaction)
+	channels = append(channels, ch)
+
+	for {
+		var transaction = <-channel
+		db.AddTransaction(transaction)
+	}
+}
+
 func AddTransaction(transaction database.Transaction) {
-	db.AddTransaction(transaction)
+	channel <- transaction
 }
 
 func GetValue() string {
@@ -38,9 +63,13 @@ func GetValue() string {
 
 func Init(source string) {
 	localSource = source
+	channels = make([]chan database.Transaction, 0)
+	channel = make(chan database.Transaction)
 	clock[localSource] = 0
 	db = database.NewDatabase(clock)
 	go autoSaveSnapshot()
+	go autoSendTransactions()
+	go autoLocalSave()
 	database.Init()
 }
 
