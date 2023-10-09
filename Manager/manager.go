@@ -12,11 +12,12 @@ var localSource string
 var db database.Database
 var channels []chan database.Transaction
 var channel chan database.Transaction
+var localVersion uint64 = 0
 
 func NewTransaction(payload string, source string) database.Transaction {
-	clock[localSource]++
+	localVersion++
 	return database.Transaction{
-		Id:      clock[localSource],
+		Id:      localVersion,
 		Payload: payload,
 		Source:  source,
 	}
@@ -33,8 +34,6 @@ func autoSaveSnapshot() {
 func autoSendTransactions() {
 	for {
 		var transaction = <-channel
-		//check if valid?
-
 		if transaction.Id > clock[transaction.Source] {
 			clock[transaction.Source] = transaction.Id
 
