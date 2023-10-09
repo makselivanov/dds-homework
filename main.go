@@ -75,7 +75,12 @@ func requestVClock(writer http.ResponseWriter, reader *http.Request) {
 	}
 }
 
-func autoSend(ws *websocket.Conn) {
+func websocketHandler(writer http.ResponseWriter, reader *http.Request) {
+	ws, err := websocket.Accept(writer, reader, &websocket.AcceptOptions{InsecureSkipVerify: true, OriginPatterns: []string{"*"}})
+	if err != nil {
+		log.Printf("Problem during accept\n")
+		return
+	}
 	defer ws.Close(websocket.StatusInternalError, fmt.Sprintf("Connection is closed with %s", source))
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -88,19 +93,10 @@ loop:
 		case <-ctx.Done():
 			break loop
 		case transaction := <-ch:
-			log.Printf("Sending transaction to peer\n")
+			log.Printf("Sending transaction id %d source %s to peer\n", transaction.Id, transaction.Source)
 			wsjson.Write(ctx, ws, transaction)
 		}
 	}
-}
-
-func websocketHandler(writer http.ResponseWriter, reader *http.Request) {
-	c, err := websocket.Accept(writer, reader, &websocket.AcceptOptions{InsecureSkipVerify: true, OriginPatterns: []string{"*"}})
-	if err != nil {
-		log.Printf("Problem during accept\n")
-		return
-	}
-	go autoSend(c)
 }
 
 func runLoop(peer string) {
@@ -112,6 +108,7 @@ func runLoop(peer string) {
 		log.Printf("Problem connecting with dial to %s", peer)
 		return
 	}
+	log.Printf("Connected with %s", peer)
 	defer c.Close(websocket.StatusInternalError, fmt.Sprintf("Connection is closed with %s", source))
 	var transaction database.Transaction
 
@@ -121,17 +118,23 @@ loop:
 		case <-ctx.Done():
 			break loop
 		default:
-			wsjson.Read(ctx, c, transaction)
-			log.Printf("Got transaction from %s\n", peer)
+			err := wsjson.Read(ctx, c, &transaction)
+			if err != nil {
+				//log.Printf("Error read from %s: %s", peer, err.Error())
+				continue loop
+			}
+			log.Printf("Got transaction from %s\n with id %d source %s", peer, transaction.Id, transaction.Source)
 			manager.AddTransaction(transaction)
 		}
 	}
 }
 
 func runPeer(peer string) {
+	time.Sleep(time.Second * 2)
 	for {
 		runLoop(peer)
-		log.Printf("Connection lost with %s\nReconnecting...", peer)
+		log.Printf("Connection lost with %s, Reconnecting...", peer)
+		time.Sleep(time.Second * 5)
 	}
 }
 
@@ -151,12 +154,12 @@ func main() {
 	http.HandleFunc("/vclock", requestVClock)
 	http.HandleFunc("/ws", websocketHandler)
 
+	for _, peer := range peers {
+		go runPeer(peer)
+	}
+
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil) // устанавливаем порт веб-сервера
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
-	}
-
-	for _, peer := range peers {
-		go runPeer(peer)
 	}
 }

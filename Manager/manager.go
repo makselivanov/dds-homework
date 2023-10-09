@@ -33,9 +33,16 @@ func autoSaveSnapshot() {
 func autoSendTransactions() {
 	for {
 		var transaction = <-channel
-		for _, ch := range channels {
-			ch <- transaction
+		//check if valid?
+
+		if transaction.Id > clock[transaction.Source] {
+			clock[transaction.Source] = transaction.Id
+
+			for _, ch := range channels {
+				ch <- transaction
+			}
 		}
+
 	}
 }
 

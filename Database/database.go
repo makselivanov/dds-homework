@@ -7,8 +7,7 @@ import (
 )
 
 type Snapshot struct {
-	snap  string
-	clock map[string]uint64
+	snap string
 }
 
 type Transaction struct {
@@ -29,26 +28,22 @@ func Init() {
 	optionsJsonPatch.AllowMissingPathOnRemove = true
 }
 
-func NewSnapshot(newValue string, clock map[string]uint64) Snapshot {
-	newclock := make(map[string]uint64)
-	for key, value := range clock {
-		newclock[key] = value
-	}
+func NewSnapshot(newValue string) Snapshot {
 	return Snapshot{
-		snap:  newValue,
-		clock: newclock,
+		snap: newValue,
 	}
 }
 
 func NewDatabase(clock map[string]uint64) Database {
 	log.Println("Create database")
 	return Database{
-		snapshot:     NewSnapshot("{}", clock),
+		snapshot:     NewSnapshot("{}"),
 		transactions: make([]Transaction, 0),
 	}
 }
 
 func (db *Database) AddTransaction(transaction Transaction) {
+	log.Printf("add transaction id %d source %s", transaction.Id, transaction.Source)
 	db.transactions = append(db.transactions, transaction)
 }
 
@@ -78,18 +73,17 @@ func (db *Database) SaveSnapshot() {
 	newsnap := snapshot.snap
 	transactions := db.transactions
 	flag := false
-	newclock := snapshot.clock
 	var err error = nil
-	for _, transcation := range transactions {
-		if transcation.Id > snapshot.clock[transcation.Source] {
-			newsnap, err = ApplyTransaction(newsnap, transcation)
-			if err == nil {
-				flag = true
-				newclock[transcation.Source] = max(newclock[transcation.Source], transcation.Id)
-			}
+	for _, transaction := range transactions {
+		newsnap, err = ApplyTransaction(newsnap, transaction)
+		if err == nil {
+			flag = true
 		}
 	}
 	if flag {
-		db.snapshot = NewSnapshot(newsnap, newclock)
+		log.Printf("Collect new snapshot\n")
+		db.snapshot = NewSnapshot(newsnap)
+	} else {
+		log.Printf("Nothing change outside of snapshot")
 	}
 }
