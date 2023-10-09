@@ -67,6 +67,7 @@ func ApplyTransaction(snap string, transaction Transaction) (string, error) {
 
 func (db Database) GetValue() string {
 	//FIXME should be tread safe?
+	db.SaveSnapshot()
 	snapshot := db.snapshot
 	snap := snapshot.snap
 	return snap

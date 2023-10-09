@@ -34,6 +34,9 @@ func autoSaveSnapshot() {
 func autoSendTransactions() {
 	for {
 		var transaction = <-channel
+		if transaction.Source == localSource {
+			localVersion = max(transaction.Id, localVersion)
+		}
 		if transaction.Id > clock[transaction.Source] {
 			clock[transaction.Source] = transaction.Id
 

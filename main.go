@@ -81,6 +81,7 @@ func websocketHandler(writer http.ResponseWriter, reader *http.Request) {
 		log.Printf("Problem during accept\n")
 		return
 	}
+	log.Printf("New connection\n")
 	defer ws.Close(websocket.StatusInternalError, fmt.Sprintf("Connection is closed with %s", source))
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -162,10 +163,10 @@ func main() {
 		log.Fatalln("Should add program args with bind port and hostpeers")
 	}
 	source = os.Args[1]
-	port := os.Args[2]
+	host := os.Args[2]
 	peers = os.Args[3:]
 	manager.Init(source)
-	log.Printf("Binding to port %s", port)
+	log.Printf("Binding to host %s", host)
 	http.HandleFunc("/replace", requestReplace) // Устанавливаем роутер
 	http.HandleFunc("/post", requestReplace)
 	http.HandleFunc("/get", requestGet)
@@ -177,7 +178,7 @@ func main() {
 		go runPeer(peer)
 	}
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil) // устанавливаем порт веб-сервера
+	err := http.ListenAndServe(host, nil) // устанавливаем порт веб-сервера
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
