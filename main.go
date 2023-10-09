@@ -150,11 +150,11 @@ loop:
 }
 
 func runPeer(peer string) {
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 5)
 	for {
 		runLoop(peer)
 		log.Printf("Connection lost with %s, Reconnecting...", peer)
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 10)
 	}
 }
 

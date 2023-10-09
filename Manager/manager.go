@@ -16,6 +16,7 @@ var localVersion uint64 = 0
 
 func NewTransaction(payload string, source string) database.Transaction {
 	localVersion++
+	log.Printf("creating new transaction id %d from %s\n", localVersion, source)
 	return database.Transaction{
 		Id:      localVersion,
 		Payload: payload,
@@ -39,10 +40,12 @@ func autoSendTransactions() {
 		}
 		if transaction.Id > clock[transaction.Source] {
 			clock[transaction.Source] = transaction.Id
-
+			log.Printf("Got new transaction id %d from %s", transaction.Id, transaction.Source)
 			for _, ch := range channels {
 				ch <- transaction
 			}
+		} else {
+			log.Printf("Got old transaction id %d from %s, local version %d", transaction.Id, transaction.Source, clock[transaction.Source])
 		}
 
 	}
