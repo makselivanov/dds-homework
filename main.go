@@ -88,6 +88,7 @@ loop:
 		case <-ctx.Done():
 			break loop
 		case transaction := <-ch:
+			log.Printf("Sending transaction to peer\n")
 			wsjson.Write(ctx, ws, transaction)
 		}
 	}
@@ -96,6 +97,7 @@ loop:
 func websocketHandler(writer http.ResponseWriter, reader *http.Request) {
 	c, err := websocket.Accept(writer, reader, &websocket.AcceptOptions{InsecureSkipVerify: true, OriginPatterns: []string{"*"}})
 	if err != nil {
+		log.Printf("Problem during accept\n")
 		return
 	}
 	go autoSend(c)
@@ -107,6 +109,7 @@ func runLoop(peer string) {
 
 	c, _, err := websocket.Dial(ctx, fmt.Sprintf("ws://%s/ws", peer), nil)
 	if err != nil {
+		log.Printf("Problem connecting with dial to %s", peer)
 		return
 	}
 	defer c.Close(websocket.StatusInternalError, fmt.Sprintf("Connection is closed with %s", source))
@@ -128,6 +131,7 @@ loop:
 func runPeer(peer string) {
 	for {
 		runLoop(peer)
+		log.Printf("Connection lost with %s\nReconnecting...", peer)
 	}
 }
 
